@@ -5,6 +5,7 @@ const ResumeBuilder = () => {
     return(
         <div>
             <h1>ResumeBuilder Page</h1>
+            <div>Hi there</div>
         </div>
     )
 }
