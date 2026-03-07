@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Loader from "../components/Loader";
-import ResumePreview from "../components/ResumePreview";
+import ResumePreview from "../components/Resumepreview";
 import { ArrowLeftIcon } from "lucide-react";
 import api from "../configs/api";
 
