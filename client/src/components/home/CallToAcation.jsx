@@ -13,7 +13,7 @@ const CallToAcation = () => {
         >
           <span>Get Started</span>
           <svg
-            xmlnBuild a Professional Resume That Helps You Stand Out and Get Hireds="http://www.w3.org/2000/svg"
+            xmln="http://www.w3.org/2000/svg"
             width="24"
             height="24"
             viewBox="0 0 24 24"
@@ -23,7 +23,7 @@ const CallToAcation = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             className="size-4.5"
-          >
+          >Build a Professional Resume That Helps You Stand Out and Get Hired
             <path d="M5 12h14" />
             <path d="m12 5 7 7-7 7" />
           </svg>
