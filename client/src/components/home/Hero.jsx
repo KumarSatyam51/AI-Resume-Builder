@@ -139,7 +139,7 @@ const Hero = () => {
               Get started
             </Link>
             <Link
-              to="/app?state=login"
+              to="/login"
               className="hidden md:block px-6 py-2 border active:scale-95 hover:bg-slate-50 transition-all rounded-full text-slate-700 hover:text-slate-900"
             >
               Login

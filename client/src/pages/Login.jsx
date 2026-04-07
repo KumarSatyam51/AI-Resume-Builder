@@ -1,11 +1,17 @@
+import axios from 'axios';
 import { Lock, Mail , User2Icon } from 'lucide-react';
 import React from "react";
+import { useNavigate } from 'react-router-dom';
+
+
+const BACKEND_URL = import.meta.env.VITE_BASE_URL;
 
 const Login = () => {
 
   const query = new URLSearchParams(window.location.search) 
   const urlState = query.get('state')
   const [state, setState] = React.useState(urlState || "login" )
+  const navigate = useNavigate();
 
   const [formData, setFormData] = React.useState({
     name: "",
@@ -14,8 +20,25 @@ const Login = () => {
   });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-  };
+  e.preventDefault();
+
+  try {
+    const { data } = await axios.post(
+      `${BACKEND_URL}/api/users/login`,
+      formData
+    );
+
+    console.log(data);
+
+    localStorage.setItem("token", data.token);
+
+    alert(data.message || "Success");
+
+    navigate("/app")
+  } catch (error) {
+    alert(error.response?.data?.message || "Error occurred");
+  }
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
