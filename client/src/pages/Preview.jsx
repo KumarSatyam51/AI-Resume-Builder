@@ -1,28 +1,33 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Loader from "../components/Loader";
+import ResumePreview from "../components/Resumepreview";
 import { ArrowLeftIcon } from "lucide-react";
-import { dummyResumeData } from "../assets/assets";
+import api from "../configs/api";
 
 const Preview = () => {
-     const { resumeId } = useParams();
+  const { resumeId } = useParams();
 
-     const [isLoading, setIsLoading] = useState(true);
-      const [resumeData, setResumeData] = useState(null);
-     
-      const loadResume = async () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [resumeData, setResumeData] = useState(null);
 
-      setResumeData(dummyResumeData.find(resume => resume._id === resumeId || null));
+  const loadResume = async () => {
+    try {
+      const { data } = await api.get("/api/resumes/public/" + resumeId);
+
+      setResumeData(data.resume);
+    } catch (error) {
+      console.log(error.message);
+    } finally {
       setIsLoading(false);
-    } 
-      
+    }
+  };
 
-
-    useEffect(() => {
+  useEffect(() => {
     loadResume();
   }, []);
 
-    return resumeData ? (
+  return resumeData ? (
     <div className="bg-slate-100">
       <div className="max-w-3xl mx-auto py-10">
         <ResumePreview
@@ -34,7 +39,7 @@ const Preview = () => {
       </div>
     </div>
   ) : (
-     <div>
+    <div>
       {isLoading ? (
         <Loader />
       ) : (
@@ -52,7 +57,7 @@ const Preview = () => {
         </div>
       )}
     </div>
-    );
+  );
 };
 
 export default Preview;
