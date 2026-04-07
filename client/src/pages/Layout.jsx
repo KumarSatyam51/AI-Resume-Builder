@@ -1,17 +1,42 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { Outlet } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../components/Loader";
+import { useEffect } from "react";
+import { login, setLoading } from "../app/features/authSlice";
+import Login from "./Login";
 
 const Layout = () => {
-    return(
-        <div>
-           
-            <div className='min-h-screen bg-gray-50'>
-                <Navbar />
-                <Outlet />
-            </div>
-        </div>
-    )
-}
+  const { user, loading } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
-export default Layout
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (token && user) {
+      dispatch(login({ token, user: JSON.parse(user) }));
+    }
+
+    dispatch(setLoading(false));
+  }, [dispatch]);
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  return (
+    <div>
+      {user ? (
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <Outlet />
+        </div>
+      ) : (
+        <Login />
+      )}
+    </div>
+  );
+};
+
+export default Layout;

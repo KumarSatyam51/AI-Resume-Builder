@@ -1,44 +1,38 @@
-import axios from 'axios';
-import { Lock, Mail , User2Icon } from 'lucide-react';
-import React from "react";
-import { useNavigate } from 'react-router-dom';
-
-
-const BACKEND_URL = import.meta.env.VITE_BASE_URL;
+import { useState } from "react";
+import { Lock, Mail, User2Icon } from "lucide-react";
+import api from "../configs/api";
+import { useDispatch } from "react-redux";
+import { login } from "../app/features/authSlice";
+import toast from "react-hot-toast";
 
 const Login = () => {
+  const dispatch = useDispatch();
 
-  const query = new URLSearchParams(window.location.search) 
-  const urlState = query.get('state')
-  const [state, setState] = React.useState(urlState || "login" )
-  const navigate = useNavigate();
+  const query = new URLSearchParams(window.location.search);
+  const urlState = query.get("state");
+  const [state, setState] = useState(urlState || "login");
 
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
+    try {
+      const { data } = await api.post(`/api/users/${state}`, formData);
 
-  try {
-    const { data } = await axios.post(
-      `${BACKEND_URL}/api/users/login`,
-      formData
-    );
+      dispatch(login({ token: data.token, user: data.user }));
+      localStorage.setItem("token", data.token);
 
-    console.log(data);
-
-    localStorage.setItem("token", data.token);
-
-    alert(data.message || "Success");
-
-    navigate("/app")
-  } catch (error) {
-    alert(error.response?.data?.message || "Error occurred");
-  }
-};
+      toast.success(data.message);
+      // Redirect to dashboard after successful login/signup
+      setTimeout(() => window.location.href = '/app', 1000);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,10 +48,12 @@ const Login = () => {
         <h1 className="text-gray-900 text-3xl mt-10 font-medium">
           {state === "login" ? "Login" : "Sign up"}
         </h1>
-        <p className="text-gray-500 text-sm mt-2">Please {state} to continue</p>
+        <p className="text-gray-500 text-sm mt-2">
+          Please {state} in to continue
+        </p>
         {state !== "login" && (
           <div className="flex items-center mt-6 w-full bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-            <User2Icon size={16} color="#6b7280" />
+            <User2Icon size={16} color="#6B7280" />
             <input
               type="text"
               name="name"
@@ -70,7 +66,7 @@ const Login = () => {
           </div>
         )}
         <div className="flex items-center w-full mt-4 bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-          <Mail size={13} color='#6B7280' />
+          <Mail size={13} color="#6B7280" />
           <input
             type="email"
             name="email"
@@ -82,8 +78,7 @@ const Login = () => {
           />
         </div>
         <div className="flex items-center mt-4 w-full bg-white border border-gray-300/80 h-12 rounded-full overflow-hidden pl-6 gap-2">
-          
-          <Lock size={13} color='#6B7280' />
+          <Lock size={13} color="#6B7280" />
           <input
             type="password"
             name="password"
