@@ -94,7 +94,7 @@ export const updateResume = async (req, res) => {
 
     let resumeDataCopy;
     if (typeof resumeData === "string") {
-      resumeDataCopy = await JSON.parse(JSON.stringify(resumeData));
+      resumeDataCopy = await JSON.parse(resumeData);
     } else {
       resumeDataCopy = structuredClone(resumeData);
     }
@@ -121,7 +121,7 @@ export const updateResume = async (req, res) => {
       resumeDataCopy,
       { new: true }
     );
- 
+
     // return success message and updated resume
     return res.status(200).json({ message: "Saved successfully", resume });
   } catch (error) {

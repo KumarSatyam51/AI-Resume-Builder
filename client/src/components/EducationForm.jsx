@@ -1,8 +1,7 @@
 import { GraduationCap, Plus, Trash2 } from "lucide-react";
-import React from "react";
 
 const EducationForm = ({ data, onChange }) => {
-    const addEducation = () => {
+  const addEducation = () => {
     const newEducation = {
       institution: "",
       degree: "",
@@ -25,9 +24,9 @@ const EducationForm = ({ data, onChange }) => {
     onChange(updated);
   };
 
-    return (
-     <div className="space-y-6">
-  <div className="flex items-center justify-between">
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
             Education
@@ -43,15 +42,15 @@ const EducationForm = ({ data, onChange }) => {
           Add Education
         </button>
       </div>
-      
+
       {data.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <GraduationCap className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p>No Education added yet.</p>
+          <p>No education added yet.</p>
           <p className="text-sm">Click "Add Education" to get started.</p>
         </div>
-      ): (
-        <div  className="space-y-4">
+      ) : (
+        <div className="space-y-4">
           {data.map((education, index) => (
             <div
               key={index}
@@ -66,7 +65,8 @@ const EducationForm = ({ data, onChange }) => {
                   <Trash2 className="size-4" />
                 </button>
               </div>
-             <div className="grid md:grid-cols-2 gap-3">
+
+              <div className="grid md:grid-cols-2 gap-3">
                 <input
                   value={education.institution || ""}
                   onChange={(e) =>
@@ -74,17 +74,17 @@ const EducationForm = ({ data, onChange }) => {
                   }
                   type="text"
                   placeholder="Institution Name"
-                  className="px-3 py-2 text-sm "
+                  className="px-3 py-2 text-sm"
                 />
 
                 <input
                   value={education.degree || ""}
                   onChange={(e) =>
-                    updateExperience(index, "degree", e.target.value)
+                    updateEducation(index, "degree", e.target.value)
                   }
                   type="text"
-                  placeholder="Degree"
-                  className="px-3 py-2 text-sm "
+                  placeholder="Degree (e.g., Bachelor's, Master's)"
+                  className="px-3 py-2 text-sm"
                 />
 
                 <input
@@ -93,7 +93,8 @@ const EducationForm = ({ data, onChange }) => {
                     updateEducation(index, "field", e.target.value)
                   }
                   type="text"
-                  className="px-3 py-2 text-study " placeholder="Field of Study"
+                  placeholder="Field of Study"
+                  className="px-3 py-2 text-sm"
                 />
 
                 <input
@@ -101,23 +102,26 @@ const EducationForm = ({ data, onChange }) => {
                   onChange={(e) =>
                     updateEducation(index, "graduation_date", e.target.value)
                   }
-                  type="month" className="px-3 py-2 text-sm "
+                  type="month"
+                  className="px-3 py-2 text-sm"
                 />
-              </div>
-                
+
                 <input
                   value={education.gpa || ""}
                   onChange={(e) =>
                     updateEducation(index, "gpa", e.target.value)
                   }
                   type="text"
-                  className="px-3 py-2 text-study " placeholder="GPA (optional)"
+                  placeholder="GPA (optional)"
+                  className="px-3 py-2 text-sm"
                 />
+              </div>
+            </div>
+          ))}
         </div>
-   ))} 
-</div>
-      )
-     } </div>
-    );
+      )}
+    </div>
+  );
 };
+
 export default EducationForm;

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { dummyResumeData } from "../assets/assets";
 import {
   ArrowLeftIcon,
   Briefcase,
@@ -17,7 +16,7 @@ import {
   User,
 } from "lucide-react";
 import PersonalInfoForm from "../components/PersonalInfoForm";
-import ResumePreview from "../components/ResumePreview.jsx"
+import ResumePreview from "../components/ResumePreview";
 import TemplateSelector from "../components/TemplateSelector";
 import ColorPicker from "../components/ColorPicker";
 import ProfessionalSummaryForm from "../components/ProfessionalSummaryForm";
@@ -25,10 +24,14 @@ import ExperienceForm from "../components/ExperienceForm";
 import EducationForm from "../components/EducationForm";
 import ProjectForm from "../components/ProjectForm";
 import SkillsForm from "../components/SkillsForm";
+import { useSelector } from "react-redux";
+import api from "../configs/api";
+import toast from "react-hot-toast";
 
 const ResumeBuilder = () => {
   const { resumeId } = useParams();
 
+  const { token } = useSelector((state) => state.auth);
 
   const [resumeData, setResumeData] = useState({
     _id: "",
@@ -45,17 +48,24 @@ const ResumeBuilder = () => {
   });
 
   const loadExistingResume = async () => {
-      const resume = dummyResumeData.find(resume => resume._id === resumeId )
-      if(resume){
-        setResumeData(resume)
-        document.title = resume.title
+    try {
+      const { data } = await api.get(`/api/resumes/get/${resumeId}`, {
+        headers: { Authorization: token },
+      });
+
+      if (data.resume) {
+        setResumeData(data.resume);
+        document.title = data.resume.title;
       }
-      }
-      const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
   const [removeBackground, setRemoveBackground] = useState(false);
 
-
-const sections = [
+  const sections = [
     { id: "personal", name: "Personal Info", icon: User },
     { id: "summary", name: "Summary", icon: FileText },
     { id: "experience", name: "Experience", icon: Briefcase },
@@ -63,17 +73,31 @@ const sections = [
     { id: "projects", name: "Projects", icon: FolderIcon },
     { id: "skills", name: "Skills", icon: Sparkles },
   ];
-      
 
   const activeSection = sections[activeSectionIndex];
 
   useEffect(() => {
     loadExistingResume();
   }, []);
-   const changeResumeVisibility = async () => {
+
+  const changeResumeVisibility = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("resumeId", resumeId);
+      formData.append(
+        "resumeData",
+        JSON.stringify({ public: !resumeData.public })
+      );
+
+      const { data } = await api.put("/api/resumes/update", formData, {
+        headers: { Authorization: token },
+      });
 
       setResumeData({ ...resumeData, public: !resumeData.public });
-    
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error saving resume:", error);
+    }
   };
 
   const handleShare = () => {
@@ -86,10 +110,37 @@ const sections = [
       alert("Share not supported on this browser.");
     }
   };
-   const downloadResume = () => {
+
+  const downloadResume = () => {
     window.print();
   };
-  
+
+  const saveResume = async () => {
+    try {
+      let updatedResumeData = structuredClone(resumeData);
+
+      // remove image from updatedResumeData
+      if (typeof resumeData.personal_info.image === "object") {
+        delete updatedResumeData.personal_info.image;
+      }
+
+      const formData = new FormData();
+      formData.append("resumeId", resumeId);
+      formData.append("resumeData", JSON.stringify(updatedResumeData));
+      removeBackground && formData.append("removeBackground", "yes");
+      typeof resumeData.personal_info.image === "object" &&
+        formData.append("image", resumeData.personal_info.image);
+
+      const { data } = await api.put("/api/resumes/update", formData, {
+        headers: { Authorization: token },
+      });
+
+      setResumeData(data.resume);
+      toast.success(data.message);
+    } catch (error) {
+      console.error("Error saving resume:", error);
+    }
+  };
 
   return (
     <div>
@@ -101,10 +152,11 @@ const sections = [
           <ArrowLeftIcon className="size-4" /> Back to Dashboard
         </Link>
       </div>
-     <div className="max-w-7xl mx-auto px-4 pb-8">
+
+      <div className="max-w-7xl mx-auto px-4 pb-8">
         <div className="grid lg:grid-cols-12 gap-8">
-            {/* Left Panel - Form */}
-            <div className="relative lg:col-span-5 rounded-lg overflow-hidden">
+          {/* Left Panel - Form */}
+          <div className="relative lg:col-span-5 rounded-lg overflow-hidden">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 pt-1">
               {/* Progress bar using activeSectionIndex */}
               <hr className="absolute top-0 left-0 right-0 border-2 border-gray-200" />
@@ -112,12 +164,14 @@ const sections = [
                 className="absolute top-0 left-0 h-1 bg-gradient-to-r from-green-500 to-green-600 border-none transition-all duration-2000"
                 style={{
                   width: `${
-                    (activeSectionIndex * 100) / (sections.length - 1) }%`,
-        }} />
-            {/* Section Navigation */}
-            <div className="flex justify-between items-center mb-6 border-b border-gray-300 py-1">
-              
-              <div className="flex items-center gap-2">
+                    (activeSectionIndex * 100) / (sections.length - 1)
+                  }%`,
+                }}
+              />
+
+              {/* Section Navigation */}
+              <div className="flex justify-between items-center mb-6 border-b border-gray-300 py-1">
+                <div className="flex items-center gap-2">
                   <TemplateSelector
                     selectedTemplate={resumeData.template}
                     onChange={(template) =>
@@ -136,7 +190,7 @@ const sections = [
                   />
                 </div>
 
-             <div className="flex items-center">
+                <div className="flex items-center">
                   {activeSectionIndex !== 0 && (
                     <button
                       onClick={() =>
@@ -147,9 +201,10 @@ const sections = [
                       className="flex items-center gap-1 p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all"
                       disabled={activeSectionIndex === 0}
                     >
-                     <ChevronLeft className="size-4" /> Previous
+                      <ChevronLeft className="size-4" /> Previous
                     </button>
                   )}
+
                   <button
                     onClick={() =>
                       setActiveSectionIndex((prevIndex) =>
@@ -161,12 +216,13 @@ const sections = [
                     }`}
                     disabled={activeSectionIndex === sections.length - 1}
                   >
-                  Next <ChevronRight className="size-4" />
+                    Next <ChevronRight className="size-4" />
                   </button>
-                    </div>
-                      </div>
-                      {/* Form Content */}
-                      <div className="space-y-6">
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <div className="space-y-6">
                 {activeSection.id === "personal" && (
                   <PersonalInfoForm
                     data={resumeData.personal_info}
@@ -203,10 +259,9 @@ const sections = [
                         experience: data,
                       }))
                     }
-              
                   />
                 )}
-                  
+
                 {activeSection.id === "education" && (
                   <EducationForm
                     data={resumeData.education}
@@ -234,12 +289,16 @@ const sections = [
                 {activeSection.id === "skills" && (
                   <SkillsForm
                     data={resumeData.skills}
-                    onChange={(data) => setResumeData((prev) => ({...prev,skills: data,
+                    onChange={(data) =>
+                      setResumeData((prev) => ({
+                        ...prev,
+                        skills: data,
                       }))
                     }
                   />
                 )}
               </div>
+
               <button
                 onClick={() => {
                   toast.promise(saveResume, { loading: "Saving..." });
@@ -248,10 +307,11 @@ const sections = [
               >
                 Save Changes
               </button>
-              </div>
-              </div>
-            {/* Right Panel - Form */}
-             <div className="lg:col-span-7 max-lg:mt-6">
+            </div>
+          </div>
+
+          {/* Right Panel - Preview */}
+          <div className="lg:col-span-7 max-lg:mt-6">
             <div className="relative w-full">
               <div className="absolute bottom-3 left-0 right-0 flex items-center justify-end gap-2">
                 {resumeData.public && (
@@ -284,14 +344,16 @@ const sections = [
               </div>
             </div>
 
-              <ResumePreview data={resumeData} template={resumeData.template}
-              accentcolor={resumeData.accent_color} />
-            </div>
-            </div>
+            <ResumePreview
+              data={resumeData}
+              template={resumeData.template}
+              accentcolor={resumeData.accent_color}
+            />
+          </div>
         </div>
+      </div>
     </div>
   );
 };
 
 export default ResumeBuilder;
-
