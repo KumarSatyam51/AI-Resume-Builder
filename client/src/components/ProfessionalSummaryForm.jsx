@@ -8,6 +8,8 @@ const ProfessionalSummaryForm = ({ data, onChange, setResumeData }) => {
   const { token } = useSelector((state) => state.auth);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  console.log(data);
+
   const generateSummary = async () => {
     try {
       setIsGenerating(true);
@@ -19,11 +21,14 @@ const ProfessionalSummaryForm = ({ data, onChange, setResumeData }) => {
         { headers: { Authorization: token } }
       );
 
+      
+
       setResumeData((prev) => ({
         ...prev,
         professional_summary: response.data.enhancedContent,
       }));
     } catch (error) {
+      console.log("error : ")
       toast.error(error?.response?.data?.message || error.message);
     } finally {
       setIsGenerating(false);

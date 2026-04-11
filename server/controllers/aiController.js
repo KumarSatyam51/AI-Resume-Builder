@@ -8,6 +8,8 @@ export const enhanceProfessionalSummary = async (req, res) => {
   try {
     const { userContent } = req.body;
 
+    
+
     if (!userContent) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -26,6 +28,8 @@ export const enhanceProfessionalSummary = async (req, res) => {
         },
       ],
     });
+
+    
 
     const enhancedContent = response.choices[0].message.content;
 
