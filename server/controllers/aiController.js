@@ -31,7 +31,12 @@ export const enhanceProfessionalSummary = async (req, res) => {
 
     return res.status(200).json({ enhancedContent });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    console.error("enhanceProfessionalSummary error:", error.response?.data || error.message);
+    const message =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      error.message;
+    return res.status(400).json({ message });
   }
 };
 
@@ -64,7 +69,12 @@ export const enhanceJobDescription = async (req, res) => {
 
     return res.status(200).json({ enhancedContent });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    console.error("enhanceJobDescription error:", error.response?.data || error.message);
+    const message =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      error.message;
+    return res.status(400).json({ message });
   }
 };
 
@@ -78,6 +88,7 @@ export const uploadResume = async (req, res) => {
     if (!resumeText) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+    
 
     const systemPrompt =
       "You are an expert AI Agent to extract data from resume.";
@@ -151,6 +162,11 @@ export const uploadResume = async (req, res) => {
 
     res.json({ resumeId: newResume._id });
   } catch (error) {
-    return res.status(400).json({ message: error.message });
+    console.error("uploadResume error:", error.response?.data || error.message);
+    const message =
+      error.response?.data?.error?.message ||
+      error.response?.data?.message ||
+      error.message;
+    return res.status(400).json({ message });
   }
 };

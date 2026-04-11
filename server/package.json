@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build": "echo \"No build step required for Node/Express server\""
   },
   "keywords": [],
   "author": "",
