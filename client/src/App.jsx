@@ -10,6 +10,7 @@ import api from "./configs/api";
 import { login, setLoading } from "./app/features/authSlice";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
+import Jobs from "./pages/Jobs";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -44,6 +45,7 @@ const App = () => {
     <>
       <Toaster />
       <Routes>
+        <Route path="/app/jobs/:resumeId" element={<Jobs />} />
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Login />} />

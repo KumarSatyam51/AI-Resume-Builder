@@ -46,6 +46,8 @@ const pdfToText = async (file) => {
   });
 };
 
+
+
 const Dashboard = () => {
   const { user, token } = useSelector((state) => state.auth);
 
@@ -72,6 +74,7 @@ const Dashboard = () => {
       toast.error(error?.response?.data?.message || error.message);
     }
   };
+
 
   const createResume = async (event) => {
     try {
@@ -218,6 +221,16 @@ const Dashboard = () => {
                 >
                   {resume.title}
                 </p>
+                <p
+  className="text-xs underline cursor-pointer"
+  style={{ color: baseColor }}
+  onClick={(e) => {
+    e.stopPropagation();
+    navigate(`/app/jobs/${resume._id}`);
+  }}
+>
+  AI Match Jobs
+</p>
 
                 <p
                   className="absolute bottom-1 text-[11px] text-slate-400 group-hover:text-slate-500 transition-all duration-300 px-2 text-center"
