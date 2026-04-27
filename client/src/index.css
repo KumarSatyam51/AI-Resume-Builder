@@ -21,5 +21,11 @@
            focus:ring-2 focus:ring-blue-500
            focus:border-blue-500;
   }
+  body {
+  background-color: black;
+  color: white; /* optional: makes text visible */
+  margin: 0;
+}
+
 }
 

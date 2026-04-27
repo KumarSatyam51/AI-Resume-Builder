@@ -55,10 +55,10 @@ const Testimonial = () => {
               />
             </svg>
           </div>
-          <span className="text-xs text-slate-500">{card.handle}</span>
+          <span className="text-xs text-white">{card.handle}</span>
         </div>
       </div>
-      <p className="text-sm py-4 text-gray-800">
+      <p className="text-sm py-4 text-white">
         Radiant made undercutting all of our competitors an absolute breeze.
       </p>
     </div>
@@ -82,23 +82,23 @@ const Testimonial = () => {
         />
       </div>
       <div className="marquee-row w-full mx-auto max-w-5xl overflow-hidden relative">
-        <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none bg-gradient-to-r from-white to-transparent"></div>
+        <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none bg-gray-to-r from-gray to-transparent"></div>
         <div className="marquee-inner flex transform-gpu min-w-[200%] pt-10 pb-5">
           {[...cardsData, ...cardsData].map((card, index) => (
             <CreateCard key={index} card={card} />
           ))}
         </div>
-        <div className="absolute right-0 top-0 h-full w-20 md:w-40 z-10 pointer-events-none bg-gradient-to-l from-white to-transparent"></div>
+        <div className="absolute right-0 top-0 h-full w-20 md:w-40 z-10 pointer-events-none bg-gray-to-l from-gray to-transparent"></div>
       </div>
 
       <div className="marquee-row w-full mx-auto max-w-5xl overflow-hidden relative">
-        <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none bg-gradient-to-r from-white to-transparent"></div>
+        <div className="absolute left-0 top-0 h-full w-20 z-10 pointer-events-none bg-gray-to-1 from-Gray to-transparent"></div>
         <div className="marquee-inner marquee-reverse flex transform-gpu min-w-[200%] pt-10 pb-5">
           {[...cardsData, ...cardsData].map((card, index) => (
             <CreateCard key={index} card={card} />
           ))}
         </div>
-        <div className="absolute right-0 top-0 h-full w-20 md:w-40 z-10 pointer-events-none bg-gradient-to-l from-white to-transparent"></div>
+        <div className="absolute right-0 top-0 h-full w-20 md:w-40 z-10 pointer-events-none bg-gray-to-l from-gray to-transparent"></div>
       </div>
       <style>{`
             @keyframes marqueeScroll {

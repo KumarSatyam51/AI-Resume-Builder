@@ -8,7 +8,7 @@ import Footer from "../components/home/Footer";
 
 const Home = () => {
   return (
-    <div className="bg-gray-50 text-gray-800">
+    <div className="bg-black text-gray-800">
 
       {/* 🔹 Top Banner */}
       <div className="w-full">
@@ -16,17 +16,17 @@ const Home = () => {
       </div>
 
       {/* 🔹 Hero Section */}
-      <section className="py-16 px-4 md:px-10 lg:px-20 bg-white">
+      <section className="py-16 px-4 md:px-10 lg:px-20 bg-black">
         <Hero />
       </section>
 
       {/* 🔹 Features */}
-      <section className="py-16 px-4 md:px-10 lg:px-20">
+      <section className="py-16 px-4 md:px-10 lg:px-20 bg-black">
         <Features />
       </section>
 
       {/* 🔹 Testimonials */}
-      <section className="py-16 px-4 md:px-10 lg:px-20 bg-gray-100">
+      <section className="py-16 px-4 md:px-10 lg:px-20 bg-black">
         <Testimonial />
       </section>
 
