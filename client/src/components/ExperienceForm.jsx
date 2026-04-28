@@ -34,11 +34,18 @@ const ExperienceForm = ({ data, onChange }) => {
   };
 
   const generateDescription = async (index) => {
-    setGeneratingIndex(index);
     const experience = data[index];
+
+    if (!experience.description?.trim()) {
+      toast.error("Please write a job description first");
+      return;
+    }
+
     const prompt = `enhance this job description ${experience.description} for the position of ${experience.position} at ${experience.company}`;
 
     try {
+      setGeneratingIndex(index);
+
       const { data } = await api.post(
         "/api/ai/enhanced-job-desc",
         { userContent: prompt },
@@ -47,6 +54,7 @@ const ExperienceForm = ({ data, onChange }) => {
 
       updateExperience(index, "description", data.enhancedContent);
     } catch (error) {
+      console.log("AI Job Description Error:", error.response?.data || error.message);
       toast.error(error?.response?.data?.message || error.message);
     } finally {
       setGeneratingIndex(-1);
@@ -64,6 +72,7 @@ const ExperienceForm = ({ data, onChange }) => {
         </div>
 
         <button
+          type="button"
           onClick={addExperience}
           className="flex items-center gap-2 px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
         >
@@ -88,6 +97,7 @@ const ExperienceForm = ({ data, onChange }) => {
               <div className="flex justify-between items-start">
                 <h4>Experience #{index + 1}</h4>
                 <button
+                  type="button"
                   onClick={() => removeExperience(index)}
                   className="text-red-500 hover:text-red-700 transition-colors"
                 >
@@ -160,6 +170,7 @@ const ExperienceForm = ({ data, onChange }) => {
                     Job Description
                   </label>
                   <button
+                    type="button"
                     onClick={() => generateDescription(index)}
                     disabled={
                       generatingIndex === index ||

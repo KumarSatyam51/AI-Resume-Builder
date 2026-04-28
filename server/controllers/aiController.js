@@ -2,13 +2,52 @@
 import ai from "../configs/ai.js";
 import Resume from "../models/Resume.js";
 
+const getAiText = (response) => response?.choices?.[0]?.message?.content?.trim();
+
+const parseJsonContent = (content) => {
+  if (!content) {
+    throw new Error("AI returned an empty response");
+  }
+
+  const cleaned = content
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  return JSON.parse(cleaned);
+};
+
+const getErrorMessage = (error) =>
+  error.response?.data?.error?.message ||
+  error.response?.data?.message ||
+  error.error?.message ||
+  error.message ||
+  "Something went wrong";
+
+const validateAiConfig = () => {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const baseURL = process.env.OPENAI_BASE_URL?.trim();
+  const model = process.env.OPENAI_MODEL?.trim();
+
+  if (!apiKey || !model) {
+    throw new Error("Missing OPENAI_API_KEY or OPENAI_MODEL in server/.env");
+  }
+
+  if (baseURL?.includes("generativelanguage.googleapis.com") && !apiKey.startsWith("AIza")) {
+    throw new Error(
+      "OPENAI_API_KEY must be a Gemini API key from Google AI Studio when using the Gemini base URL"
+    );
+  }
+};
+
 // Controller for enhancing a resume's professional summary
-// POST: /api/ai/enhance-pro-sum
+// POST: /api/ai/enhanced-pro-sum
 export const enhanceProfessionalSummary = async (req, res) => {
   try {
-    const { userContent } = req.body;
+    validateAiConfig();
 
-    
+    const { userContent } = req.body;
 
     if (!userContent) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -29,25 +68,26 @@ export const enhanceProfessionalSummary = async (req, res) => {
       ],
     });
 
-    
+    const enhancedContent = getAiText(response);
 
-    const enhancedContent = response.choices[0].message.content;
+    if (!enhancedContent) {
+      return res.status(502).json({ message: "AI returned an empty response" });
+    }
 
     return res.status(200).json({ enhancedContent });
   } catch (error) {
     console.error("enhanceProfessionalSummary error:", error.response?.data || error.message);
-    const message =
-      error.response?.data?.error?.message ||
-      error.response?.data?.message ||
-      error.message;
+    const message = getErrorMessage(error);
     return res.status(400).json({ message });
   }
 };
 
 // Controller for enhancing a resume's job description
-// POST: /api/ai/enhance-job-desc
+// POST: /api/ai/enhanced-job-desc
 export const enhanceJobDescription = async (req, res) => {
   try {
+    validateAiConfig();
+
     const { userContent } = req.body;
 
     if (!userContent) {
@@ -69,15 +109,16 @@ export const enhanceJobDescription = async (req, res) => {
       ],
     });
 
-    const enhancedContent = response.choices[0].message.content;
+    const enhancedContent = getAiText(response);
+
+    if (!enhancedContent) {
+      return res.status(502).json({ message: "AI returned an empty response" });
+    }
 
     return res.status(200).json({ enhancedContent });
   } catch (error) {
     console.error("enhanceJobDescription error:", error.response?.data || error.message);
-    const message =
-      error.response?.data?.error?.message ||
-      error.response?.data?.message ||
-      error.message;
+    const message = getErrorMessage(error);
     return res.status(400).json({ message });
   }
 };
@@ -86,60 +127,63 @@ export const enhanceJobDescription = async (req, res) => {
 // POST: /api/ai/upload-resume
 export const uploadResume = async (req, res) => {
   try {
+    validateAiConfig();
+
     const { resumeText, title } = req.body;
     const userId = req.userId;
 
     if (!resumeText) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-    
 
     const systemPrompt =
-      "You are an expert AI Agent to extract data from resume.";
+      "You are an expert resume parser. Extract resume data and return only valid JSON.";
 
     const userPrompt = `extract data from this resume: ${resumeText}
     
-    Provide data in the following JSON format with no additional text before or after:
+    Provide data in this exact JSON shape with real values, not schema definitions.
+    Use empty strings, empty arrays, and false when data is not found.
+    Return no additional text before or after the JSON.
 
     {
-        professional_summary: { type: String, default: "" },
-        skills: [{ type: String }],
-        personal_info: {
-        image: { type: String, default: "" },
-        full_name: { type: String, default: "" },
-        profession: { type: String, default: "" },
-        email: { type: String, default: "" },
-        phone: { type: String, default: "" },
-        location: { type: String, default: "" },
-        linkedin: { type: String, default: "" },
-        website: { type: String, default: "" },
-        },
-        experience: [
+      "professional_summary": "",
+      "skills": [],
+      "personal_info": {
+        "image": "",
+        "full_name": "",
+        "profession": "",
+        "email": "",
+        "phone": "",
+        "location": "",
+        "linkedin": "",
+        "website": ""
+      },
+      "experience": [
         {
-            company: { type: String },
-            position: { type: String },
-            start_date: { type: String },
-            end_date: { type: String },
-            description: { type: String },
-            is_current: { type: Boolean },
-        },
-        ],
-        project: [
+          "company": "",
+          "position": "",
+          "start_date": "",
+          "end_date": "",
+          "description": "",
+          "is_current": false
+        }
+      ],
+      "project": [
         {
-            name: { type: String },
-            type: { type: String },
-            description: { type: String },
-        },
-        ],
-        education: [
+          "name": "",
+          "type": "",
+          "description": ""
+        }
+      ],
+      "education": [
         {
-            institution: { type: String },
-            degree: { type: String },
-            field: { type: String },
-            graduation_date: { type: String },
-            gpa: { type: String },
-        },
-        ],
+          "institution": "",
+          "degree": "",
+          "field": "",
+          "graduation_date": "",
+          "gpa": ""
+        }
+      ]
     }
     `;
 
@@ -158,8 +202,8 @@ export const uploadResume = async (req, res) => {
       response_format: { type: "json_object" },
     });
 
-    const extractedData = response.choices[0].message.content;
-    const parsedData = JSON.parse(extractedData);
+    const extractedData = getAiText(response);
+    const parsedData = parseJsonContent(extractedData);
 
     // create new resume in the database
     const newResume = await Resume.create({ userId, title, ...parsedData });
@@ -167,10 +211,7 @@ export const uploadResume = async (req, res) => {
     res.json({ resumeId: newResume._id });
   } catch (error) {
     console.error("uploadResume error:", error.response?.data || error.message);
-    const message =
-      error.response?.data?.error?.message ||
-      error.response?.data?.message ||
-      error.message;
+    const message = getErrorMessage(error);
     return res.status(400).json({ message });
   }
 };

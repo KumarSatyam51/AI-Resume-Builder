@@ -8,28 +8,36 @@ const ProfessionalSummaryForm = ({ data, onChange, setResumeData }) => {
   const { token } = useSelector((state) => state.auth);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  console.log(data);
-
   const generateSummary = async () => {
+    if (!data || data.trim() === "") {
+      toast.error("Please write some summary first");
+      return;
+    }
+
     try {
       setIsGenerating(true);
-      const prompt = `enhance my professional summary "${data}"`;
+
+      const prompt = `Enhance this professional resume summary: ${data}`;
 
       const response = await api.post(
         "/api/ai/enhanced-pro-sum",
         { userContent: prompt },
-        { headers: { Authorization: token } }
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
       );
-
-      
 
       setResumeData((prev) => ({
         ...prev,
         professional_summary: response.data.enhancedContent,
       }));
+
+      toast.success("Summary enhanced successfully");
     } catch (error) {
-      console.log("error : ")
-      toast.error(error?.response?.data?.message || error.message);
+      console.log("AI Summary Error:", error.response?.data || error.message);
+      toast.error(error?.response?.data?.message || "Something went wrong");
     } finally {
       setIsGenerating(false);
     }
@@ -48,6 +56,7 @@ const ProfessionalSummaryForm = ({ data, onChange, setResumeData }) => {
         </div>
 
         <button
+          type="button"
           disabled={isGenerating}
           onClick={generateSummary}
           className="flex items-center gap-2 px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors disabled:opacity-50"
@@ -67,10 +76,11 @@ const ProfessionalSummaryForm = ({ data, onChange, setResumeData }) => {
           onChange={(e) => onChange(e.target.value)}
           rows={7}
           className="w-full p-3 px-4 mt-2 border text-sm border-gray-300 rounded-lg focus:ring focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
-          placeholder="Write a compilling professional summary that highlights your key strengths and career objectives..."
+          placeholder="Write a compelling professional summary that highlights your key strengths and career objectives..."
         />
+
         <p className="text-xs text-gray-500 max-w-4/5 mx-auto text-center">
-          Tip: Keep it concise (3-4 sentences) and focus on your most relevant
+          Tip: Keep it concise, 3-4 sentences, and focus on your most relevant
           achievements and skills.
         </p>
       </div>
