@@ -20,7 +20,6 @@ const fetchJobsFromSerpApi = async (query) => {
     });
   } catch (error) {
     if (error?.response?.status === 429) {
-      console.log("SerpAPI rate limited. Retrying after 2 seconds...");
       await sleep(2000);
 
       return await axios.get("https://serpapi.com/search", {
@@ -64,8 +63,8 @@ export const getAiMatchedJobs = async (req, res) => {
     const safeSkills = Array.isArray(resume.skills)
       ? resume.skills
           .map((skill) => {
-            if (typeof skill === "string") return skill;
-            if (skill?.name) return skill.name;
+            if (typeof skill === "string") return skill.trim();
+            if (skill?.name) return skill.name.trim();
             return "";
           })
           .filter(Boolean)
@@ -89,9 +88,43 @@ export const getAiMatchedJobs = async (req, res) => {
           .filter(Boolean)
       : [];
 
+    const summaryText = (
+      resume.professional_summary ||
+      resume.summary ||
+      ""
+    ).trim();
+
+    const profession = (
+      resume.personal_info?.profession ||
+      resume.profession ||
+      ""
+    ).trim();
+
+    const hasResumeData =
+      safeSkills.length > 0 ||
+      safeEducation.length > 0 ||
+      safeExperience.length > 0 ||
+      safeProjects.length > 0 ||
+      summaryText.length > 10 ||
+      profession.length > 2;
+
+    if (!hasResumeData) {
+      return res.status(400).json({
+        message:
+          "Please fill your resume first. Add skills, education, experience, projects, or profession to get matched jobs.",
+        ai: {
+          jobTitle: "",
+          keywords: [],
+        },
+        query: "",
+        jobs: [],
+      });
+    }
+
     const resumeText = `
 Title: ${resume.title || ""}
-Summary: ${resume.summary || ""}
+Profession: ${profession}
+Summary: ${summaryText}
 Skills: ${safeSkills.join(", ")}
 Education: ${safeEducation.join(", ")}
 Experience: ${safeExperience.join(", ")}
@@ -99,10 +132,8 @@ Projects: ${safeProjects.join(", ")}
 `;
 
     let parsed = {
-      jobTitle: safeSkills.includes("React")
-        ? "Full Stack Developer"
-        : "Software Developer",
-      keywords: safeSkills.length ? safeSkills.slice(0, 8) : ["JavaScript", "React", "Node.js"],
+      jobTitle: "",
+      keywords: [],
     };
 
     try {
@@ -112,20 +143,28 @@ Projects: ${safeProjects.join(", ")}
           {
             role: "system",
             content:
-              "You extract job search metadata from resumes. Return only valid JSON. No markdown. No explanation.",
+              "You are an expert career assistant. Return only valid JSON. No markdown. No explanation.",
           },
           {
             role: "user",
             content: `
-Analyze this resume and return valid JSON only in this exact format:
+Analyze this resume and return valid JSON only:
+
 {
   "jobTitle": "best matching job title",
   "keywords": ["keyword1", "keyword2", "keyword3"]
 }
 
+Rules:
+- Do not force software/web developer jobs.
+- Detect correct field from resume.
+- Support CSE, mechanical, civil, electrical, electronics, HR, finance, management, sales, marketing, etc.
+- Keywords should be useful for job search.
+- If data is weak, use profession, skills, education, or projects.
+
 Resume:
 ${resumeText}
-            `,
+`,
           },
         ],
         temperature: 0.2,
@@ -138,13 +177,86 @@ ${resumeText}
         parsed = JSON.parse(content);
       }
     } catch (aiError) {
-      console.log("AI failed, using fallback query:", aiError.message);
+      console.log("AI failed, using fallback:", aiError.message);
     }
 
-    const jobTitle = parsed?.jobTitle || "Software Developer";
-    const keywords = Array.isArray(parsed?.keywords) ? parsed.keywords : [];
+    if (!parsed || typeof parsed !== "object") {
+      parsed = {
+        jobTitle: "",
+        keywords: [],
+      };
+    }
 
-    const query = `${jobTitle} ${keywords.join(" ")}`.trim();
+    if (!parsed.jobTitle || !parsed.jobTitle.trim()) {
+      const skillText = safeSkills.join(" ").toLowerCase();
+      const educationText = safeEducation.join(" ").toLowerCase();
+      const projectText = safeProjects.join(" ").toLowerCase();
+
+      const allText = `${skillText} ${educationText} ${projectText} ${profession}`.toLowerCase();
+
+      if (
+        /react|node|javascript|java|next|mongodb|express|html|css|python|c\+\+|cse|computer|software|web/.test(
+          allText
+        )
+      ) {
+        parsed.jobTitle = "Software Developer";
+      } else if (profession) {
+        parsed.jobTitle = profession;
+      } else if (safeExperience.length > 0) {
+        parsed.jobTitle = safeExperience[0];
+      } else if (safeEducation.length > 0) {
+        parsed.jobTitle = safeEducation[0];
+      } else if (safeProjects.length > 0) {
+        parsed.jobTitle = safeProjects[0];
+      } else if (safeSkills.length > 0) {
+        parsed.jobTitle = safeSkills[0];
+      }
+    }
+
+    if (!parsed.jobTitle || !parsed.jobTitle.trim()) {
+      return res.status(400).json({
+        message:
+          "Please add skills, education, experience, projects, or profession before finding jobs.",
+        ai: {
+          jobTitle: "",
+          keywords: [],
+        },
+        query: "",
+        jobs: [],
+      });
+    }
+
+    if (!Array.isArray(parsed.keywords)) {
+      parsed.keywords = [];
+    }
+
+    if (parsed.keywords.length === 0) {
+      parsed.keywords = [
+        ...safeSkills.slice(0, 5),
+        profession,
+        ...safeEducation.slice(0, 1),
+        ...safeProjects.slice(0, 1),
+      ].filter(Boolean);
+    }
+
+    parsed.jobTitle = parsed.jobTitle.trim();
+    parsed.keywords = parsed.keywords
+      .map((keyword) => String(keyword).trim())
+      .filter(Boolean);
+
+    const query = `${parsed.jobTitle} ${parsed.keywords
+      .slice(0, 3)
+      .join(" ")} jobs India`.trim();
+
+    if (!query || query === "jobs India") {
+      return res.status(400).json({
+        message:
+          "Please add proper resume details before finding matched jobs.",
+        ai: parsed,
+        query: "",
+        jobs: [],
+      });
+    }
 
     let jobs = [];
 
@@ -157,7 +269,7 @@ ${resumeText}
       console.log("SerpAPI Error message:", serpError.message);
 
       return res.status(200).json({
-        message: "Jobs temporarily unavailable. Please try again after some time.",
+        message: "Jobs temporarily unavailable. Please try again later.",
         ai: parsed,
         query,
         jobs: [],

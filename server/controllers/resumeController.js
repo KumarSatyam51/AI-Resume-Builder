@@ -2,6 +2,18 @@ import imageKit from "../configs/imageKit.js";
 import Resume from "../models/Resume.js";
 import fs from "fs";
 
+const parseResumeData = (resumeData) => {
+  if (!resumeData) {
+    throw new Error("Missing resume data");
+  }
+
+  if (typeof resumeData === "string") {
+    return JSON.parse(resumeData);
+  }
+
+  return structuredClone(resumeData);
+};
+
 // Controller for creating a new resume
 // POST: /api/resumes/create
 export const createResume = async (req, res) => {
@@ -92,12 +104,11 @@ export const updateResume = async (req, res) => {
     const { resumeId, resumeData, removeBackground } = req.body;
     const image = req.file;
 
-    let resumeDataCopy;
-    if (typeof resumeData === "string") {
-      resumeDataCopy = await JSON.parse(resumeData);
-    } else {
-      resumeDataCopy = structuredClone(resumeData);
+    if (!resumeId) {
+      return res.status(400).json({ message: "Missing resume id" });
     }
+
+    const resumeDataCopy = parseResumeData(resumeData);
 
     if (image) {
       const imageBufferData = fs.createReadStream(image.path);
@@ -113,14 +124,19 @@ export const updateResume = async (req, res) => {
         },
       });
 
+      resumeDataCopy.personal_info = resumeDataCopy.personal_info || {};
       resumeDataCopy.personal_info.image = response.url;
     }
 
-    const resume = await Resume.findByIdAndUpdate(
+    const resume = await Resume.findOneAndUpdate(
       { userId, _id: resumeId },
       resumeDataCopy,
       { new: true }
     );
+
+    if (!resume) {
+      return res.status(404).json({ message: "Resume not found" });
+    }
 
     // return success message and updated resume
     return res.status(200).json({ message: "Saved successfully", resume });

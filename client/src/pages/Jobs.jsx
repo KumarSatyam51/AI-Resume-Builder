@@ -35,7 +35,7 @@ const Jobs = () => {
           Authorization: token,
         },
         params: {
-          t: Date.now(), // prevent cache / 304
+          t: Date.now(),
         },
       });
 
@@ -44,9 +44,6 @@ const Jobs = () => {
       setQuery(data?.query || "");
       setSelectedIndex(0);
     } catch (error) {
-      console.log("Jobs API Error:", error);
-      console.log("Backend Error:", error?.response?.data);
-
       toast.error(
         error?.response?.data?.message ||
           error.message ||
@@ -98,9 +95,15 @@ const Jobs = () => {
     }
   }, [filteredJobs.length, selectedIndex]);
 
+  // Same logic (no change)
+  const applyLink =
+    selectedJob?.related_links?.[0]?.link || selectedJob?.share_link || "";
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
+
+        {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
@@ -119,7 +122,7 @@ const Jobs = () => {
             <button
               onClick={handleRefresh}
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
             >
               {loading ? "Loading..." : "Refresh Jobs"}
             </button>
@@ -133,6 +136,7 @@ const Jobs = () => {
           </div>
         </div>
 
+        {/* AI Analysis */}
         {aiData && (
           <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
             <h2 className="text-lg font-semibold text-slate-800 mb-2">
@@ -159,6 +163,7 @@ const Jobs = () => {
           </div>
         )}
 
+        {/* Search */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-6">
           <input
             type="text"
@@ -169,24 +174,27 @@ const Jobs = () => {
           />
         </div>
 
+        {/* Jobs */}
         {loading ? (
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-            <p className="text-slate-600">Loading jobs...</p>
+          <div className="bg-white border rounded-xl p-6 shadow-sm">
+            <p>Loading jobs...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-            <p className="text-slate-600">No matching jobs found.</p>
+          <div className="bg-white border rounded-xl p-6 shadow-sm">
+            <p>No matching jobs found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            {/* Job List */}
             <div className="lg:col-span-5 xl:col-span-4">
-              <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+              <div className="space-y-4 max-h-[75vh] overflow-y-auto">
                 {filteredJobs.map((job, index) => {
                   const active = index === selectedIndex;
 
                   return (
                     <button
-                      key={job?.job_id || job?.title || index}
+                      key={index}
                       onClick={() => setSelectedIndex(index)}
                       className={`w-full text-left border rounded-xl p-4 transition shadow-sm ${
                         active
@@ -194,140 +202,54 @@ const Jobs = () => {
                           : "border-slate-200 bg-white hover:border-slate-300"
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        {job?.thumbnail ? (
-                          <img
-                            src={job.thumbnail}
-                            alt={job?.company_name || "Company"}
-                            className="w-12 h-12 rounded-lg object-cover border border-slate-200"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg border border-slate-200 flex items-center justify-center text-xs text-slate-400 bg-slate-50">
-                            Logo
-                          </div>
-                        )}
-
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-slate-800 line-clamp-2">
-                            {job?.title || "Untitled Job"}
-                          </h3>
-
-                          <p className="text-sm text-slate-700 mt-1 line-clamp-1">
-                            {job?.company_name || "Unknown Company"}
-                          </p>
-
-                          <p className="text-sm text-slate-500 mt-1 line-clamp-1">
-                            {job?.location || "Location not specified"}
-                          </p>
-
-                          {Array.isArray(job?.extensions) &&
-                            job.extensions.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-3">
-                                {job.extensions.slice(0, 3).map((item, i) => (
-                                  <span
-                                    key={`${item}-${i}`}
-                                    className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-700"
-                                  >
-                                    {item}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                        </div>
-                      </div>
+                      <h3 className="font-semibold">{job.title}</h3>
+                      <p className="text-sm">{job.company_name}</p>
+                      <p className="text-sm text-slate-500">{job.location}</p>
                     </button>
                   );
                 })}
               </div>
             </div>
 
+            {/* Job Detail */}
             <div className="lg:col-span-7 xl:col-span-8">
-              {selectedJob ? (
-                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm sticky top-4">
-                  <div className="flex items-start gap-4">
-                    {selectedJob?.thumbnail ? (
-                      <img
-                        src={selectedJob.thumbnail}
-                        alt={selectedJob?.company_name || "Company"}
-                        className="w-16 h-16 rounded-xl object-cover border border-slate-200"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-xl border border-slate-200 flex items-center justify-center text-sm text-slate-400 bg-slate-50">
-                        Logo
-                      </div>
-                    )}
+              {selectedJob && (
+                <div className="bg-white border rounded-xl p-6 shadow-sm">
+                  <h2 className="text-xl font-bold">
+                    {selectedJob.title}
+                  </h2>
 
-                    <div className="flex-1">
-                      <h2 className="text-2xl font-bold text-slate-800">
-                        {selectedJob?.title || "Untitled Job"}
-                      </h2>
+                  <p className="mt-1">{selectedJob.company_name}</p>
+                  <p className="text-slate-500">
+                    {selectedJob.location}
+                  </p>
 
-                      <p className="text-slate-700 mt-2 font-medium">
-                        {selectedJob?.company_name || "Unknown Company"}
-                      </p>
-
-                      <p className="text-slate-500 mt-1">
-                        {selectedJob?.location || "Location not specified"}
-                      </p>
-
-                      {Array.isArray(selectedJob?.extensions) &&
-                        selectedJob.extensions.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-4">
-                            {selectedJob.extensions.map((item, i) => (
-                              <span
-                                key={`${item}-${i}`}
-                                className="px-3 py-1 text-sm rounded-full bg-slate-100 text-slate-700"
-                              >
-                                {item}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3 mt-6">
-                    {selectedJob?.share_link && (
+                  {/* ✅ Only Apply Button (Google removed) */}
+                  <div className="mt-5">
+                    {applyLink && (
                       <a
-                        href={selectedJob.share_link}
+                        href={applyLink}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                      >
-                        View Job
-                      </a>
-                    )}
-
-                    {selectedJob?.related_links?.[0]?.link && (
-                      <a
-                        href={selectedJob.related_links[0].link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-5 py-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md transition"
                       >
                         Apply Now
                       </a>
                     )}
                   </div>
 
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-3">
+                  <div className="mt-6">
+                    <h3 className="font-semibold mb-2">
                       Job Description
                     </h3>
-
-                    <div className="text-slate-600 leading-7 whitespace-pre-line">
-                      {selectedJob?.description || "No description available."}
-                    </div>
+                    <p className="text-slate-600 whitespace-pre-line">
+                      {selectedJob.description}
+                    </p>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-                  <p className="text-slate-600">
-                    Select a job to view details.
-                  </p>
                 </div>
               )}
             </div>
+
           </div>
         )}
       </div>
